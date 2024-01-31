@@ -1,19 +1,61 @@
+<!DOCTYPE html>
 <html>
-	<head>
+<head>
 <style>
+
 #player_distance {
 	display: block;
 	width: 100%;
 }
+
+body {
+	margin: 0;
+}
+#content {
+	position: fixed;
+	height: 100%;
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+}
+
+#overlay {
+	background-color: black;
+	opacity: 90%;
+	z-index: 20;
+	position: fixed;
+	height: 100%;
+	width: 100%;
+	color: white;
+	display: flex;
+	justify-items: center;
+	align-items: center;
+}
+
+#overlay > * {
+	width: 100%;
+	text-align: center;
+}
+
+#drum {
+	flex-grow: 1;
+	background: url("native-american-drum.png") no-repeat center center fixed;
+}
 </style>
 	</head>
 	<body>
-		<div>
+		<div id="overlay"><h1>Click to start</h1></div>
+		<div id="content">
+		<div id="controls">
 			<!--<input type="checkbox" id="echo_toggle"><label>Echo on</label>-->
 			<b>Distance from cliff</b>
 			<tc-range-slider slider-width="100%" round="0" generate-labels="true" generate-labels-units="m" min="1" max="120" value="40" id="player_distance"></tc-range-slider>
 		</div>
-		<h2>Press spacebar to hit drum</h2>
+		<div id="drum">
+		<h2>Tap the drum or hit the spacebar</h2>
+		</div>
+		</div>
 		<script src="tcrs-generated-labels.min.js"></script>
 		<script src="toolcool-range-slider.min.js"></script>
 		<script>
@@ -35,6 +77,7 @@
 	};
 
 	let start_playback = async () => {
+		document.querySelector("#overlay").remove();
 		let ctx = new AudioContext({
 			latencyHint: 0,
 		});
@@ -147,9 +190,9 @@
 
 		});
 
-		/*document.body.addEventListener("pointerdown", (ev) => {
+		document.querySelector("#drum").addEventListener("pointerdown", (ev) => {
 			play_sound();
-		});*/
+		});
 
 
 		/*document.querySelector("#echo_toggle").addEventListener("change", (ev) => {
@@ -162,7 +205,7 @@
 			
 	}
 
-	document.body.addEventListener("click", start_playback, {once: true});
+	document.querySelector("#overlay").addEventListener("click", start_playback, {once: true});
 
 </script>
 	</body>
