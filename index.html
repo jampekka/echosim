@@ -1,0 +1,169 @@
+<html>
+	<head>
+<style>
+#player_distance {
+	display: block;
+	width: 100%;
+}
+</style>
+	</head>
+	<body>
+		<div>
+			<!--<input type="checkbox" id="echo_toggle"><label>Echo on</label>-->
+			<b>Distance from cliff</b>
+			<tc-range-slider slider-width="100%" round="0" generate-labels="true" generate-labels-units="m" min="1" max="120" value="40" id="player_distance"></tc-range-slider>
+		</div>
+		<h2>Press spacebar to hit drum</h2>
+		<script src="tcrs-generated-labels.min.js"></script>
+		<script src="toolcool-range-slider.min.js"></script>
+		<script>
+	
+	const SPEED_OF_SOUND = 343.0;
+	const GAP_WIDTH = 120.0;
+	class EchoNode {
+		constructor(ctx, source_distance=0.0, listener_distance=0.0) {
+			this.ctx = ctx;
+			this.source_distance = source_distance;
+			this.listener_distance = listener_distance;
+		}
+	}
+
+	let bind_to_element = (selector, event_name, callback) => {
+		let element = document.querySelector(selector);
+		callback(element);
+		element.addEventListener(event_name, (ev) => {callback(element, ev);});
+	};
+
+	let start_playback = async () => {
+		let ctx = new AudioContext({
+			latencyHint: 0,
+		});
+
+		let impulse_buffer = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+		let echo_buffer = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+		
+		impulse_buffer.getChannelData(0)[0] = 1;
+		
+		let instrument_buffer = await fetch("./shaman.wav");
+		instrument_buffer = await ctx.decodeAudioData((await instrument_buffer.arrayBuffer()));
+		instrument_buffer.channelInterpretation = "speakers";
+
+		echo_buffer.getChannelData(0)[0] = 1.0;
+		echo_buffer.getChannelData(0)[ctx.sampleRate*0.2] = 0.1;
+		//echo_buffer.getChannelData(0)[ctx.sampleRate*0.6] = 0.05;
+
+		
+
+
+		let convolver = new ConvolverNode(ctx);
+		convolver.buffer = impulse_buffer;
+		convolver.normalize = false;
+		convolver.connect(ctx.destination);
+
+		
+		/*let max_echo_dur = 0.5;
+		let set_echo_dur = () => {
+			let echo_dur = (Math.sin(performance.now()/1000/2) + 1)/2*max_echo_dur + 0.2;
+			//let buf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+			//buf.getChannelData(0)[echo_dur*ctx.sampleRate] = 1.0;
+			//convolver.buffer= buf;
+			//console.log(echo_dur);
+			delay.delayTime.value = echo_dur;
+		};
+		setInterval(set_echo_dur, 10);*/
+
+		let input = new GainNode(ctx);
+		
+		output = ctx.destination;
+		input.connect(output);
+		
+		let echo_delay0 = new DelayNode(ctx);
+		let echo_pan0 = new StereoPannerNode(ctx);
+		echo_pan0.pan.value = -0.5;
+		let echo_gain0 = new GainNode(ctx);
+		input.connect(echo_delay0)
+			.connect(echo_pan0)
+			.connect(echo_gain0)
+			.connect(output);
+
+		let echo_delay1 = new DelayNode(ctx);
+		let echo_pan1 = new StereoPannerNode(ctx);
+		let echo_gain1 = new GainNode(ctx);
+		echo_pan1.pan.value = 0.5;
+		
+		input.connect(echo_delay1)
+			.connect(echo_pan1)
+			.connect(echo_gain1)
+			.connect(output)
+		;
+
+		
+		let prev_beat_time = undefined;
+		let play_sound = () => {
+			let wtf = ctx.createBufferSource();
+			let time = performance.now();
+			let beat_dur = time - prev_beat_time;
+			prev_beat_time = time;
+			console.log(beat_dur, echo_delay0.delayTime.value, echo_delay1.delayTime.value);
+			wtf.buffer = instrument_buffer;
+			wtf.connect(input);
+			wtf.start();
+		};
+
+		/*let beat_to_beat = 0.695;
+		let play_beat = () => {
+			play_sound();
+			if(beat_to_beat) {
+				setTimeout(play_beat, beat_to_beat*1000);
+			};
+		};
+		play_beat();*/
+
+		//document.querySelector("#instrument_button").addEventListener("click", play_sound);
+		document.body.addEventListener("keydown", (ev) => {
+			if(ev.key != ' ' || ev.repeat) {
+				return;
+			}
+			play_sound();
+		});
+		
+		bind_to_element("#player_distance", "change", (el) => {
+			let distance0 = Math.abs(el.value - 0);
+			let delay0 = (distance0*2)/SPEED_OF_SOUND;
+			let gain0 = 1/(distance0*2/5 + 2);
+			
+			let distance1 = Math.abs(GAP_WIDTH - el.value);
+			let delay1 = (distance1*2)/SPEED_OF_SOUND;
+			let gain1 = 1/(distance1*2/5 + 2);
+			
+			let at = ctx.currentTime + 1.0;
+
+			echo_delay0.delayTime.linearRampToValueAtTime(delay0, at);
+			echo_gain0.gain.linearRampToValueAtTime(gain0, at);
+
+			echo_delay1.delayTime.linearRampToValueAtTime(delay1, at);
+			echo_gain1.gain.linearRampToValueAtTime(gain1, at);
+
+
+		});
+
+		/*document.body.addEventListener("pointerdown", (ev) => {
+			play_sound();
+		});*/
+
+
+		/*document.querySelector("#echo_toggle").addEventListener("change", (ev) => {
+			if(ev.target.checked) {
+				convolver.buffer = echo_buffer;
+			} else {
+				convolver.buffer = impulse_buffer;
+			}
+		});*/
+			
+	}
+
+	document.body.addEventListener("click", start_playback, {once: true});
+
+</script>
+	</body>
+</html>
