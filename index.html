@@ -41,6 +41,8 @@ body {
 #drum {
 	flex-grow: 1;
 	background: url("native-american-drum.png") no-repeat center center fixed;
+	touch-action: none;
+	user-select: none;
 }
 </style>
 	</head>
@@ -118,6 +120,8 @@ body {
 		let input = new GainNode(ctx);
 		
 		output = ctx.destination;
+		output = new DynamicsCompressorNode(ctx);
+		output.connect(ctx.destination);
 		input.connect(output);
 		
 		let echo_delay0 = new DelayNode(ctx);
@@ -170,16 +174,18 @@ body {
 			play_sound();
 		});
 		
+		
 		bind_to_element("#player_distance", "change", (el) => {
+			console.log("Setting acoustics");
 			let distance0 = Math.abs(el.value - 0);
 			let delay0 = (distance0*2)/SPEED_OF_SOUND;
-			let gain0 = 1/(distance0*2/10 + 2);
+			let gain0 = 1/(distance0*2/5 + 2);
 			
 			let distance1 = Math.abs(GAP_WIDTH - el.value);
 			let delay1 = (distance1*2)/SPEED_OF_SOUND;
-			let gain1 = 1/(distance1*2/10 + 2);
+			let gain1 = 1/(distance1*2/5 + 2);
 			
-			let at = ctx.currentTime + 1.0;
+			let at = ctx.currentTime + 0.1;
 
 			echo_delay0.delayTime.linearRampToValueAtTime(delay0, at);
 			echo_gain0.gain.linearRampToValueAtTime(gain0, at);
