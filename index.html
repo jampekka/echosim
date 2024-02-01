@@ -87,7 +87,7 @@ body {
 		
 		impulse_buffer.getChannelData(0)[0] = 1;
 		
-		let instrument_buffer = await fetch("./shaman.wav");
+		let instrument_buffer = await fetch("./snare.wav");
 		instrument_buffer = await ctx.decodeAudioData((await instrument_buffer.arrayBuffer()));
 		instrument_buffer.channelInterpretation = "speakers";
 
@@ -173,11 +173,11 @@ body {
 		bind_to_element("#player_distance", "change", (el) => {
 			let distance0 = Math.abs(el.value - 0);
 			let delay0 = (distance0*2)/SPEED_OF_SOUND;
-			let gain0 = 1/(distance0*2/5 + 2);
+			let gain0 = 1/(distance0*2/10 + 2);
 			
 			let distance1 = Math.abs(GAP_WIDTH - el.value);
 			let delay1 = (distance1*2)/SPEED_OF_SOUND;
-			let gain1 = 1/(distance1*2/5 + 2);
+			let gain1 = 1/(distance1*2/10 + 2);
 			
 			let at = ctx.currentTime + 1.0;
 
