@@ -1,0 +1,48 @@
+<body>
+	<h1>USE A HEADSET! Click anywhere to start</h1>
+<script>
+
+async function start_playback() {
+	console.log("Here");
+	let echos = [
+		//[0, 0],
+		[0.189, -22.2],
+		//[0.645, -37.6],
+		//[0.784, -40.6],
+		[0.72, -36.6],
+		[0.965, -39.8],
+		[1.316, -42.5],
+		[1.605, -43.3]
+	];
+
+	let ctx = new AudioContext({latencyHint: 0});
+
+	let mic_stream = await navigator.mediaDevices.getUserMedia({
+			audio: {
+				// Can enable these for demoing purposes. Probably will
+				// add latency and/or distortions.
+				echoCancellation: false,
+				noiseSuppression: true,
+				autoGainControl: false
+			}
+		});
+	let mic_input = ctx.createMediaStreamSource(mic_stream);
+	let input = mic_input;
+	let output = ctx.destination;
+	
+	for (let [lag, mag] of echos) {
+		let gain = Math.pow(10, (mag+10)/10);
+		console.log(gain);
+		let gainer = new GainNode(ctx);
+		gainer.gain.value = gain;
+		let delayer = new DelayNode(ctx);
+		delayer.delayTime.value = lag;
+		input.connect(gainer).connect(delayer).connect(output);
+	}
+
+	input.connect(output);
+	
+}
+document.addEventListener("click", start_playback, {once: true});
+</script>
+</body>
